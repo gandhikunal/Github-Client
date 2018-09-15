@@ -16,75 +16,73 @@ enum Result<T> {
 }
 
 class WebService {
-    //let sessionManager = Alamofire.SessionManager.default
-    // get the default headers
-    
+
     let sessionManager = { () -> SessionManager in
+       
         var headers = Alamofire.SessionManager.defaultHTTPHeaders
-        headers["Authentication"] = "Basic Z2FuZGhpa3VuYWw6NzkyZmM1Nzc5YTQ1YTZmYTk3MWQ3NDUwM2Y5NGU2Mjg3MGUwMGMwMg=="
-        
+        let username = "gandhikunal"
+        let password = "792fc5779a45a6fa971d74503f94e62870e00c02"
+        guard let(key,value) = Alamofire.Request.authorizationHeader(user: username, password: password) else { return Alamofire.SessionManager() }
+        headers[key] = value
         // create a custom session configuration
         let configuration = URLSessionConfiguration.default
         configuration.httpAdditionalHeaders = headers
-        
         // create a session manager with the configuration
         let sessionManager = Alamofire.SessionManager(configuration: configuration)
-        let username = "gandhikunal"
-        let password = "792fc5779a45a6fa971d74503f94e62870e00c02"
         return sessionManager
     } ()
    
+    func fetchCommits() {
+        
+    }
     
     func fetchCollaborator(ownerName: String, reposName: String, completion: @escaping (_ result: Result<([Branches],[Collaborator])>) -> ()) {
         
         let dispatchGroup = DispatchGroup()
         var resultBranches: [Branches]?
         var resultCollaborators: [Collaborator]?
-//        var resultCollaborators = [Collaborator]()
-//        resultCollaborators.append(Collaborator(loginName: "gandhikunal", type: "User"))
-//        resultCollaborators.append(Collaborator(loginName: "priteshshah1983", type: "User"))
+
         var errorQuery: Error?
         
         let requestCollaborators = sessionManager.request("https://api.github.com/repos/\(ownerName)/\(reposName)/collaborators")
 //        print(requestCollaborators.request!)
 //        requestCollaborators.authenticate(user: username, password: password)
-        debugPrint(requestCollaborators)
+//        debugPrint(requestCollaborators)
         
-//        let requestBranches = sessionManager.request("https://api.github.com/repos/\(ownerName)/\(reposName)/branches")
+        let requestBranches = sessionManager.request("https://api.github.com/repos/\(ownerName)/\(reposName)/branches")
 //        requestBranches.authenticate(user: username, password: password)
 //        debugPrint(requestBranches)
-//       print("hello")
-//        dispatchGroup.enter()
-//        requestBranches.responseData { (response) in
-//            guard let statusCode = response.response?.statusCode else { print("Query Failed"); return }
-//            guard statusCode == 200 else { print("Invalid reponse code \(statusCode)"); return}
-//            if let error = response.error {
-//                errorQuery = error
-//            } else {
-//                let data = response.result.value
-//                let decoder = JSONDecoder()
-//                resultBranches = try! decoder.decode([Branches].self, from: data!)
-////                completion(Result.sucess(resultBranches))
-//            }
-//            dispatchGroup.leave()
-//        }
-//
+        
+        dispatchGroup.enter()
+        requestBranches.responseData { (response) in
+            guard let statusCode = response.response?.statusCode else { print("Query Failed"); return }
+            guard statusCode == 200 else { print("Invalid reponse code \(statusCode)"); return}
+            if let error = response.error {
+                errorQuery = error
+            } else {
+                let data = response.result.value
+                let decoder = JSONDecoder()
+                resultBranches = try! decoder.decode([Branches].self, from: data!)
+//                completion(Result.sucess(resultBranches))
+            }
+            dispatchGroup.leave()
+        }
+
         dispatchGroup.enter()
         requestCollaborators.responseData { (response) in
             guard let statusCode = response.response?.statusCode else { print("Query Failed"); return }
-//            guard statusCode == 200 else {
-//                print("Invalid reponse code \(statusCode)");
-//                return
-//            }
+            guard statusCode == 200 else {
+                print("Invalid reponse code \(statusCode)");
+                return
+            }
             if let error = response.error {
                 errorQuery = error
 //                completion(Result.failure(error))
             }else {
                 let data = response.result.value
                 let decoder = JSONDecoder()
-                let dataString = String(data: data!, encoding: .utf8)
+//                let dataString = String(data: data!, encoding: .utf8)
                 resultCollaborators = try! decoder.decode([Collaborator].self, from: data!)
-                print("Kunal")
             }
             dispatchGroup.leave()
         }

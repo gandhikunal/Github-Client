@@ -11,13 +11,19 @@ import Foundation
 class Branches: Codable {
     
     var branchName: String
+    var shaKey: String
+    var url: String
     
     enum CodingKeys: String, CodingKey {
         case branchName = "name"
+        case shaKey
+        case url
     }
     
-    init(branchName: String) {
+    init(branchName: String, shaKey: String, url: String) {
         self.branchName = branchName
+        self.shaKey = shaKey
+        self.url = url
     }
 }
 
